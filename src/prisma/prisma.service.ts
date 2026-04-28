@@ -4,7 +4,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { join } from 'node:path';
 
 try {
-  process.loadEnvFile(join(__dirname, '../../.env'));
+  process.loadEnvFile(join(__dirname, '../../../.env'));
 } catch {
   // In production, DATABASE_URL is usually provided by the environment.
 }
