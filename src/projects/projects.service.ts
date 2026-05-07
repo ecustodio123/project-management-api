@@ -1,7 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { ProjectRole } from '@prisma/client';
+import { AddProjectMemberDto } from './dto/add-project-member.dto';
+import { UpdateProjectMemberRoleDto } from './dto/update-project-member-role.dto';
 
 @Injectable()
 export class ProjectsService {
@@ -15,6 +23,15 @@ export class ProjectsService {
         name,
         description,
         ownerId,
+        members: {
+          create: {
+            userId: ownerId,
+            role: 'OWNER',
+          },
+        },
+      },
+      include: {
+        members: true,
       },
     });
   }
@@ -89,6 +106,220 @@ export class ProjectsService {
 
     return {
       message: 'Project deleted successfully',
+    };
+  }
+
+  async addMember(
+    projectId: string,
+    addProjectMemberDto: AddProjectMemberDto,
+    currentUserId: string,
+  ) {
+    const { email, role = ProjectRole.MEMBER } = addProjectMemberDto;
+
+    const currentMember = await this.prisma.projectMember.findUnique({
+      where: {
+        userId_projectId: {
+          userId: currentUserId,
+          projectId,
+        },
+      },
+    });
+
+    if (!currentMember) {
+      throw new ForbiddenException('You are not a member of this project');
+    }
+
+    if (
+      currentMember.role !== ProjectRole.OWNER &&
+      currentMember.role !== ProjectRole.ADMIN
+    ) {
+      throw new ForbiddenException('You do not have permission to add members');
+    }
+
+    const userToAdd = await this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (!userToAdd) {
+      throw new NotFoundException('User not found');
+    }
+
+    const existingMember = await this.prisma.projectMember.findUnique({
+      where: {
+        userId_projectId: {
+          userId: userToAdd.id,
+          projectId,
+        },
+      },
+    });
+
+    if (existingMember) {
+      throw new BadRequestException('User is already a member of this project');
+    }
+
+    return this.prisma.projectMember.create({
+      data: {
+        userId: userToAdd.id,
+        projectId,
+        role,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
+
+  async getMembers(projectId: string, currentUserId: string) {
+    const member = await this.prisma.projectMember.findUnique({
+      where: {
+        userId_projectId: {
+          userId: currentUserId,
+          projectId,
+        },
+      },
+    });
+
+    if (!member) {
+      throw new ForbiddenException('You are not a member of this project');
+    }
+
+    return this.prisma.projectMember.findMany({
+      where: {
+        projectId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+  }
+
+  async updateMemberRole(
+    projectId: string,
+    userId: string,
+    updateProjectMemberRoleDto: UpdateProjectMemberRoleDto,
+    currentUserId: string,
+  ) {
+    const { role } = updateProjectMemberRoleDto;
+
+    const currentMember = await this.prisma.projectMember.findUnique({
+      where: {
+        userId_projectId: {
+          userId: currentUserId,
+          projectId,
+        },
+      },
+    });
+
+    if (!currentMember) {
+      throw new ForbiddenException('You are not a member of this project');
+    }
+
+    if (currentMember.role !== ProjectRole.OWNER) {
+      throw new ForbiddenException('Only the project owner can update roles');
+    }
+
+    const memberToUpdate = await this.prisma.projectMember.findUnique({
+      where: {
+        userId_projectId: {
+          userId,
+          projectId,
+        },
+      },
+    });
+
+    if (!memberToUpdate) {
+      throw new NotFoundException('Member not found');
+    }
+
+    if (memberToUpdate.role === ProjectRole.OWNER) {
+      throw new BadRequestException('Cannot change the project owner role');
+    }
+
+    return this.prisma.projectMember.update({
+      where: {
+        userId_projectId: {
+          userId,
+          projectId,
+        },
+      },
+      data: {
+        role,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
+
+  async removeMember(projectId: string, userId: string, currentUserId: string) {
+    const currentMember = await this.prisma.projectMember.findUnique({
+      where: {
+        userId_projectId: {
+          userId: currentUserId,
+          projectId,
+        },
+      },
+    });
+
+    if (!currentMember) {
+      throw new ForbiddenException('You are not a member of this project');
+    }
+
+    if (currentMember.role !== ProjectRole.OWNER) {
+      throw new ForbiddenException('Only the project owner can remove members');
+    }
+
+    const memberToRemove = await this.prisma.projectMember.findUnique({
+      where: {
+        userId_projectId: {
+          userId,
+          projectId,
+        },
+      },
+    });
+
+    if (!memberToRemove) {
+      throw new NotFoundException('Member not found');
+    }
+
+    if (memberToRemove.role === ProjectRole.OWNER) {
+      throw new BadRequestException('Cannot remove the project owner');
+    }
+
+    await this.prisma.projectMember.delete({
+      where: {
+        userId_projectId: {
+          userId,
+          projectId,
+        },
+      },
+    });
+
+    return {
+      message: 'Member removed successfully',
     };
   }
 }

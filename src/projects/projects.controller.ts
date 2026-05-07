@@ -14,6 +14,8 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ProjectsService } from './projects.service';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { AddProjectMemberDto } from './dto/add-project-member.dto';
+import { UpdateProjectMemberRoleDto } from './dto/update-project-member-role.dto';
 
 type AuthenticatedRequest = Request & {
   user: {
@@ -61,5 +63,58 @@ export class ProjectsController {
   @Delete(':id')
   remove(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
     return this.projectsService.remove(id, request.user.sub);
+  }
+
+  @Post(':id/members')
+  @UseGuards(JwtAuthGuard)
+  addMember(
+    @Param('id') projectId: string,
+    @Body() addProjectMemberDto: AddProjectMemberDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.projectsService.addMember(
+      projectId,
+      addProjectMemberDto,
+      request.user.sub,
+    );
+  }
+
+  @Get(':id/members')
+  @UseGuards(JwtAuthGuard)
+  getMembers(
+    @Param('id') projectId: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.projectsService.getMembers(projectId, request.user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/members/:userId')
+  updateMemberRole(
+    @Param('id') projectId: string,
+    @Param('userId') userId: string,
+    @Body() updateProjectMemberRoleDto: UpdateProjectMemberRoleDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.projectsService.updateMemberRole(
+      projectId,
+      userId,
+      updateProjectMemberRoleDto,
+      request.user.sub,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id/members/:userId')
+  removeMember(
+    @Param('id') projectId: string,
+    @Param('userId') userId: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.projectsService.removeMember(
+      projectId,
+      userId,
+      request.user.sub,
+    );
   }
 }
