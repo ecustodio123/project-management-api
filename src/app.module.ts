@@ -6,9 +6,17 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ProjectsModule } from './projects/projects.module';
 import { TasksModule } from './tasks/tasks.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
-  imports: [PrismaModule, UsersModule, AuthModule, ProjectsModule, TasksModule],
+  imports: [
+    PrismaModule,
+    UsersModule,
+    AuthModule,
+    ProjectsModule,
+    TasksModule,
+    CommentsModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
