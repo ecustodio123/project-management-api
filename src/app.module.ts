@@ -8,6 +8,7 @@ import { ProjectsModule } from './projects/projects.module';
 import { TasksModule } from './tasks/tasks.module';
 import { CommentsModule } from './comments/comments.module';
 import { FilesModule } from './files/files.module';
+import { S3Module } from './s3/s3.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { FilesModule } from './files/files.module';
     TasksModule,
     CommentsModule,
     FilesModule,
+    S3Module,
   ],
   controllers: [AppController],
   providers: [AppService],

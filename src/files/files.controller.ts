@@ -11,9 +11,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
 import { Request } from 'express';
+import { memoryStorage } from 'multer';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FilesService } from './files.service';
 
@@ -32,16 +31,7 @@ export class FilesController {
   @Post('tasks/:id/files')
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads/tasks',
-        filename: (_, file, callback) => {
-          const uniqueName =
-            `${Date.now()}-${Math.round(Math.random() * 1e9)}` +
-            extname(file.originalname);
-
-          callback(null, uniqueName);
-        },
-      }),
+      storage: memoryStorage(),
       limits: {
         fileSize: 10 * 1024 * 1024,
       },
@@ -61,6 +51,10 @@ export class FilesController {
     @UploadedFile() file: Express.Multer.File,
     @Req() request: AuthenticatedRequest,
   ) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+
     return this.filesService.upload(taskId, file, request.user.sub);
   }
 
@@ -74,5 +68,14 @@ export class FilesController {
   @Delete('files/:id')
   remove(@Param('id') fileId: string, @Req() request: AuthenticatedRequest) {
     return this.filesService.remove(fileId, request.user.sub);
+  }
+
+  @Get('files/:id/download')
+  @UseGuards(JwtAuthGuard)
+  getDownloadUrl(
+    @Param('id') fileId: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.filesService.getDownloadUrl(fileId, request.user.sub);
   }
 }

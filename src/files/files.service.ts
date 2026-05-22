@@ -4,11 +4,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { unlink } from 'fs/promises';
+import { S3Service } from '../s3/s3.service';
 
 @Injectable()
 export class FilesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   async upload(
     taskId: string,
@@ -37,12 +40,16 @@ export class FilesService {
     if (!member) {
       throw new ForbiddenException('You are not a member of this project');
     }
+    const uploadedFile = await this.s3Service.uploadFile(
+      file,
+      `tasks/${taskId}`,
+    );
 
     return this.prisma.file.create({
       data: {
         originalName: file.originalname,
-        filename: file.filename,
-        path: file.path,
+        filename: uploadedFile.key,
+        path: uploadedFile.url,
         mimeType: file.mimetype,
         size: file.size,
         taskId,
@@ -140,14 +147,44 @@ export class FilesService {
       },
     });
 
-    try {
-      await unlink(file.path);
-    } catch {
-      // El archivo físico puede no existir, pero la metadata ya fue eliminada.
-    }
+    await this.s3Service.deleteFile(file.filename);
 
     return {
       message: 'File deleted successfully',
     };
+  }
+
+  async getDownloadUrl(fileId: string, currentUserId: string) {
+    const file = await this.prisma.file.findUnique({
+      where: {
+        id: fileId,
+      },
+      include: {
+        task: {
+          select: {
+            projectId: true,
+          },
+        },
+      },
+    });
+
+    if (!file) {
+      throw new NotFoundException('File not found');
+    }
+
+    const member = await this.prisma.projectMember.findUnique({
+      where: {
+        userId_projectId: {
+          userId: currentUserId,
+          projectId: file.task.projectId,
+        },
+      },
+    });
+
+    if (!member) {
+      throw new ForbiddenException('You are not a member of this project');
+    }
+
+    return this.s3Service.getSignedDownloadUrl(file.filename);
   }
 }
