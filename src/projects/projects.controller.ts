@@ -117,4 +117,13 @@ export class ProjectsController {
       request.user.sub,
     );
   }
+
+  @Get(':id/activity')
+  @UseGuards(JwtAuthGuard)
+  getActivity(
+    @Param('id') projectId: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.projectsService.getActivity(projectId, request.user.sub);
+  }
 }

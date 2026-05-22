@@ -8,10 +8,15 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { GetTasksQueryDto } from './dto/get-tasks-query.dto';
+import { ActivityLogService } from '../activity-log/activity-log.service';
+import { ActivityAction } from '@prisma/client';
 
 @Injectable()
 export class TasksService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly activityLogService: ActivityLogService,
+  ) {}
 
   async create(
     projectId: string,
@@ -48,7 +53,7 @@ export class TasksService {
       }
     }
 
-    return this.prisma.task.create({
+    const task = await this.prisma.task.create({
       data: {
         title: createTaskDto.title,
         description: createTaskDto.description,
@@ -77,6 +82,17 @@ export class TasksService {
         },
       },
     });
+
+    await this.activityLogService.log({
+      action: ActivityAction.TASK_CREATED,
+      entityType: 'TASK',
+      entityId: task.id,
+      message: `Task "${task.title}" was created`,
+      projectId,
+      userId: currentUserId,
+    });
+
+    return task;
   }
 
   async findAll(
@@ -194,7 +210,7 @@ export class TasksService {
       }
     }
 
-    return this.prisma.task.update({
+    const updatedTask = await this.prisma.task.update({
       where: {
         id: taskId,
       },
@@ -221,6 +237,17 @@ export class TasksService {
         },
       },
     });
+
+    await this.activityLogService.log({
+      action: ActivityAction.TASK_UPDATED,
+      entityType: 'TASK',
+      entityId: updatedTask.id,
+      message: `Task "${updatedTask.title}" was updated`,
+      projectId: task.projectId,
+      userId: currentUserId,
+    });
+
+    return updatedTask;
   }
 
   async remove(taskId: string, currentUserId: string) {
@@ -246,6 +273,15 @@ export class TasksService {
     if (!member) {
       throw new ForbiddenException('You are not a member of this project');
     }
+
+    await this.activityLogService.log({
+      action: ActivityAction.TASK_DELETED,
+      entityType: 'TASK',
+      entityId: task.id,
+      message: `Task "${task.title}" was deleted`,
+      projectId: task.projectId,
+      userId: currentUserId,
+    });
 
     await this.prisma.task.delete({
       where: {

@@ -5,12 +5,15 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../s3/s3.service';
+import { ActivityAction } from '@prisma/client';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 
 @Injectable()
 export class FilesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly s3Service: S3Service,
+    private readonly activityLogService: ActivityLogService,
   ) {}
 
   async upload(
@@ -45,7 +48,7 @@ export class FilesService {
       `tasks/${taskId}`,
     );
 
-    return this.prisma.file.create({
+    const createdFile = await this.prisma.file.create({
       data: {
         originalName: file.originalname,
         filename: uploadedFile.key,
@@ -56,6 +59,17 @@ export class FilesService {
         uploadedById: currentUserId,
       },
     });
+
+    await this.activityLogService.log({
+      action: ActivityAction.FILE_UPLOADED,
+      entityType: 'FILE',
+      entityId: createdFile.id,
+      message: `Uploaded file "${file.originalname}"`,
+      projectId: task.projectId,
+      userId: currentUserId,
+    });
+
+    return createdFile;
   }
 
   async findAll(taskId: string, currentUserId: string) {

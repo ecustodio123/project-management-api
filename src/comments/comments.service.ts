@@ -5,10 +5,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
-
+import { ActivityAction } from '@prisma/client';
+import { ActivityLogService } from '../activity-log/activity-log.service';
 @Injectable()
 export class CommentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly activityLogService: ActivityLogService,
+  ) {}
 
   async create(
     taskId: string,
@@ -38,7 +42,7 @@ export class CommentsService {
       throw new ForbiddenException('You are not a member of this project');
     }
 
-    return this.prisma.taskComment.create({
+    const comment = await this.prisma.taskComment.create({
       data: {
         content: createCommentDto.content || '',
         taskId,
@@ -54,6 +58,17 @@ export class CommentsService {
         },
       },
     });
+
+    await this.activityLogService.log({
+      action: ActivityAction.COMMENT_CREATED,
+      entityType: 'COMMENT',
+      entityId: comment.id,
+      message: 'Comment added to task',
+      projectId: task.projectId,
+      userId: currentUserId,
+    });
+
+    return comment;
   }
 
   async findAll(taskId: string, currentUserId: string) {

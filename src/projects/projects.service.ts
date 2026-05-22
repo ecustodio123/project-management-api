@@ -10,15 +10,20 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectRole } from '@prisma/client';
 import { AddProjectMemberDto } from './dto/add-project-member.dto';
 import { UpdateProjectMemberRoleDto } from './dto/update-project-member-role.dto';
+import { ActivityLogService } from '../activity-log/activity-log.service';
+import { ActivityAction } from '@prisma/client';
 
 @Injectable()
 export class ProjectsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly activityLogService: ActivityLogService,
+  ) {}
 
   async create(createProjectDto: CreateProjectDto, ownerId: string) {
     const { name, description } = createProjectDto;
 
-    return this.prisma.project.create({
+    const project = await this.prisma.project.create({
       data: {
         name,
         description,
@@ -34,6 +39,17 @@ export class ProjectsService {
         members: true,
       },
     });
+
+    await this.activityLogService.log({
+      action: ActivityAction.PROJECT_CREATED,
+      entityType: 'PROJECT',
+      entityId: project.id,
+      message: `Project "${project.name}" was created`,
+      projectId: project.id,
+      userId: ownerId,
+    });
+
+    return project;
   }
 
   async findAll(ownerId: string) {
@@ -321,5 +337,38 @@ export class ProjectsService {
     return {
       message: 'Member removed successfully',
     };
+  }
+
+  async getActivity(projectId: string, currentUserId: string) {
+    const member = await this.prisma.projectMember.findUnique({
+      where: {
+        userId_projectId: {
+          userId: currentUserId,
+          projectId,
+        },
+      },
+    });
+
+    if (!member) {
+      throw new ForbiddenException('You are not a member of this project');
+    }
+
+    return this.prisma.activityLog.findMany({
+      where: {
+        projectId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
   }
 }

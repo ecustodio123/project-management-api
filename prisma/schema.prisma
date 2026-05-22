@@ -32,6 +32,26 @@ enum TaskPriority {
   URGENT
 }
 
+enum ActivityAction {
+  PROJECT_CREATED
+  PROJECT_UPDATED
+  PROJECT_DELETED
+
+  MEMBER_ADDED
+  MEMBER_REMOVED
+  MEMBER_ROLE_UPDATED
+
+  TASK_CREATED
+  TASK_UPDATED
+  TASK_DELETED
+
+  COMMENT_CREATED
+  COMMENT_DELETED
+
+  FILE_UPLOADED
+  FILE_DELETED
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -47,6 +67,7 @@ model User {
   createdTasks  Task[] @relation("TaskCreator")
   comments TaskComment[]
   uploadedFiles File[]
+  activityLogs ActivityLog[]
 }
 
 model Project {
@@ -60,6 +81,7 @@ model Project {
 
   members ProjectMember[]
   tasks   Task[]
+  activityLogs ActivityLog[]
 }
 
 model ProjectMember {
@@ -129,4 +151,24 @@ model File {
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model ActivityLog {
+  id         String           @id @default(uuid())
+  action     ActivityAction
+
+  entityType String
+  entityId   String
+
+  message    String
+
+  metadata   Json?
+
+  projectId  String
+  project    Project          @relation(fields: [projectId], references: [id])
+
+  userId     String
+  user       User             @relation(fields: [userId], references: [id])
+
+  createdAt  DateTime         @default(now())
 }

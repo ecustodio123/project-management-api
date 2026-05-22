@@ -9,6 +9,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { CommentsModule } from './comments/comments.module';
 import { FilesModule } from './files/files.module';
 import { S3Module } from './s3/s3.module';
+import { ActivityLogModule } from './activity-log/activity-log.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { S3Module } from './s3/s3.module';
     CommentsModule,
     FilesModule,
     S3Module,
+    ActivityLogModule,
   ],
   controllers: [AppController],
   providers: [AppService],
