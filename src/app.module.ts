@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { ProjectsModule } from './projects/projects.module';
 import { TasksModule } from './tasks/tasks.module';
 import { CommentsModule } from './comments/comments.module';
+import { FilesModule } from './files/files.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { CommentsModule } from './comments/comments.module';
     ProjectsModule,
     TasksModule,
     CommentsModule,
+    FilesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
