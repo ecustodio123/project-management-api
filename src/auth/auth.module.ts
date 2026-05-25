@@ -4,6 +4,7 @@ import type { StringValue } from 'ms';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { CognitoService } from './cognito.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 try {
@@ -43,7 +44,7 @@ function getJwtExpiresIn(): StringValue {
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAuthGuard],
-  exports: [JwtModule, JwtAuthGuard],
+  providers: [AuthService, CognitoService, JwtAuthGuard],
+  exports: [JwtModule, CognitoService, JwtAuthGuard],
 })
 export class AuthModule {}

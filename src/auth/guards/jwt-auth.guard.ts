@@ -4,21 +4,24 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
-
-type JwtPayload = {
-  sub: string;
-  email: string;
-};
+import { CognitoService } from '../cognito.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 type AuthenticatedRequest = Request & {
-  user?: JwtPayload;
+  user?: {
+    sub: string;
+    email: string;
+    cognitoSub: string;
+  };
 };
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly cognitoService: CognitoService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
@@ -29,14 +32,36 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     try {
-      const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
-        secret: process.env.JWT_SECRET,
-      });
+      const payload = await this.cognitoService.verifyAccessToken(token);
+      console.log('COGNITO ACCESS PAYLOAD', payload);
 
-      request.user = payload;
+      const cognitoSub = payload.sub;
+
+      const user = await this.prisma.user.findUnique({
+        where: {
+          cognitoSub,
+        },
+        select: {
+          id: true,
+          email: true,
+          cognitoSub: true,
+        },
+      });
+      console.log('DB USER FOUND', user);
+
+      if (!user) {
+        throw new UnauthorizedException('User is not synced');
+      }
+
+      request.user = {
+        sub: user.id,
+        email: user.email,
+        cognitoSub: user.cognitoSub ?? cognitoSub,
+      };
 
       return true;
-    } catch {
+    } catch (error) {
+      console.error('AUTH GUARD ERROR', error);
       throw new UnauthorizedException('Invalid or expired token');
     }
   }

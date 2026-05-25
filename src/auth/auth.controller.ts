@@ -5,7 +5,15 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from 'src/auth/dto/register.dto';
 import { LoginDto } from 'src/auth/dto/login.dto';
@@ -86,5 +94,13 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Missing or invalid access token' })
   me(@Req() request: AuthenticatedRequest) {
     return this.authService.me(request.user.sub);
+  }
+
+  @Post('cognito/sync-user')
+  async syncUser(
+    @Headers('authorization')
+    authorization?: string,
+  ) {
+    return this.authService.syncUser(authorization);
   }
 }

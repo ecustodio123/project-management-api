@@ -54,9 +54,10 @@ enum ActivityAction {
 
 model User {
   id        String   @id @default(uuid())
+  cognitoSub String?  @unique
   email     String   @unique
   name      String
-  password  String
+  password   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
