@@ -7,6 +7,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { ActivityAction } from '@prisma/client';
 import { ActivityLogService } from '../activity-log/activity-log.service';
+import {
+  canManageProject,
+  canWriteProjectContent,
+} from '../projects/utils/project-permissions';
+
 @Injectable()
 export class CommentsService {
   constructor(
@@ -40,6 +45,10 @@ export class CommentsService {
 
     if (!member) {
       throw new ForbiddenException('You are not a member of this project');
+    }
+
+    if (!canWriteProjectContent(member.role)) {
+      throw new ForbiddenException('You do not have permission to comment');
     }
 
     const comment = await this.prisma.taskComment.create({
@@ -154,6 +163,15 @@ export class CommentsService {
       );
     }
 
+    const isCommentOwner = comment.userId === currentUserId;
+    const canDeleteOthers = canManageProject(member.role);
+
+    if (!isCommentOwner && !canDeleteOthers) {
+      throw new ForbiddenException(
+        'You do not have permission to delete this comment',
+      );
+    }
+
     await this.prisma.taskComment.delete({
       where: {
         id: commentId,
@@ -163,5 +181,22 @@ export class CommentsService {
     return {
       message: 'Comment deleted successfully',
     };
+  }
+
+  private async getProjectMember(projectId: string, userId: string) {
+    const member = await this.prisma.projectMember.findUnique({
+      where: {
+        userId_projectId: {
+          userId,
+          projectId,
+        },
+      },
+    });
+
+    if (!member) {
+      throw new ForbiddenException('You are not a member of this project');
+    }
+
+    return member;
   }
 }

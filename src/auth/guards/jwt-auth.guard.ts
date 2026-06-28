@@ -33,7 +33,6 @@ export class JwtAuthGuard implements CanActivate {
 
     try {
       const payload = await this.cognitoService.verifyAccessToken(token);
-      console.log('COGNITO ACCESS PAYLOAD', payload);
 
       const cognitoSub = payload.sub;
 
@@ -47,7 +46,6 @@ export class JwtAuthGuard implements CanActivate {
           cognitoSub: true,
         },
       });
-      console.log('DB USER FOUND', user);
 
       if (!user) {
         throw new UnauthorizedException('User is not synced');

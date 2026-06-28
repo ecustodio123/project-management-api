@@ -106,7 +106,6 @@ export class AuthService {
     const token = authorization.replace('Bearer ', '');
 
     const payload = await this.cognitoService.verifyIdToken(token);
-    console.log({ payload });
     const cognitoSub = payload.sub;
 
     const email = typeof payload.email === 'string' ? payload.email : undefined;

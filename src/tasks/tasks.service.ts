@@ -10,6 +10,10 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { GetTasksQueryDto } from './dto/get-tasks-query.dto';
 import { ActivityLogService } from '../activity-log/activity-log.service';
 import { ActivityAction } from '@prisma/client';
+import {
+  canManageProject,
+  canWriteProjectContent,
+} from 'src/projects/utils/project-permissions';
 
 @Injectable()
 export class TasksService {
@@ -34,6 +38,12 @@ export class TasksService {
 
     if (!member) {
       throw new ForbiddenException('You are not a member of this project');
+    }
+
+    if (!canWriteProjectContent(member.role)) {
+      throw new ForbiddenException(
+        'You do not have permission to create tasks',
+      );
     }
 
     if (createTaskDto.assigneeId) {
@@ -193,6 +203,12 @@ export class TasksService {
       throw new ForbiddenException('You are not a member of this project');
     }
 
+    if (!canWriteProjectContent(member.role)) {
+      throw new ForbiddenException(
+        'You do not have permission to update tasks',
+      );
+    }
+
     if (updateTaskDto.assigneeId) {
       const assigneeMember = await this.prisma.projectMember.findUnique({
         where: {
@@ -274,6 +290,12 @@ export class TasksService {
       throw new ForbiddenException('You are not a member of this project');
     }
 
+    if (!canManageProject(member.role)) {
+      throw new ForbiddenException(
+        'You do not have permission to delete tasks',
+      );
+    }
+
     await this.activityLogService.log({
       action: ActivityAction.TASK_DELETED,
       entityType: 'TASK',
@@ -341,5 +363,22 @@ export class TasksService {
     }
 
     return task;
+  }
+
+  private async getProjectMember(projectId: string, userId: string) {
+    const member = await this.prisma.projectMember.findUnique({
+      where: {
+        userId_projectId: {
+          userId,
+          projectId,
+        },
+      },
+    });
+
+    if (!member) {
+      throw new ForbiddenException('You are not a member of this project');
+    }
+
+    return member;
   }
 }

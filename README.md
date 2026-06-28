@@ -1,244 +1,388 @@
-# Project Management API
+<div align="center">
 
-Backend API for a fullstack **Project Management / Client Portal** application.
+# ⚙️ FlowPilot API
 
-This project was built to learn and practice **Backend Engineering**, **Database Design**, **Authentication**, **Cloud Storage**, and **AWS services** using a real-world architecture.
+### Backend powering the FlowPilot Collaborative Project Management Platform
+
+Secure, scalable, and cloud-ready REST API built with NestJS, Prisma, PostgreSQL, and AWS Cognito.
+
+<p align="center">
+
+[![NestJS](https://img.shields.io/badge/NestJS-E0234E?logo=nestjs&logoColor=white)](https://nestjs.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-2D3748?logo=prisma&logoColor=white)](https://www.prisma.io/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![AWS Cognito](https://img.shields.io/badge/AWS-Cognito-FF9900?logo=amazonaws&logoColor=white)](https://aws.amazon.com/cognito/)
+[![Railway](https://img.shields.io/badge/Railway-Deployed-0B0D0E?logo=railway&logoColor=white)](https://railway.app/)
+
+</p>
+
+</div>
 
 ---
 
-## Features
+# 🚀 API Documentation
 
-### Authentication
+Swagger Documentation
+
+https://project-management-api-production-c67f.up.railway.app/api/docs
+
+---
+
+# 🌐 Frontend Application
+
+https://project-management-web.pages.dev/
+
+---
+
+# 📖 Overview
+
+FlowPilot API is the backend service responsible for powering the FlowPilot collaborative project management platform.
+
+The API provides secure authentication, project collaboration, role-based authorization, task management, comments, file uploads, and user synchronization using AWS Cognito.
+
+Designed following modern backend architecture principles, the project emphasizes scalability, maintainability, and clean separation of responsibilities.
+
+---
+
+# ✨ Features
+
+## 🔐 Authentication
+
+- AWS Cognito Authentication
+- JWT Validation
+- Access Token Verification
+- ID Token Verification
+- User Synchronization
+- Secure Authentication Guards
+
+---
+
+## 👥 User Management
 
 - User Registration
-- User Login
-- JWT Authentication
-- Protected Routes
-- Current Authenticated User (`/auth/me`)
+- Cognito User Sync
+- Profile Management
 
-### Projects
+---
+
+## 📁 Project Management
 
 - Create Projects
 - Update Projects
 - Delete Projects
-- Get Project Details
-- List User Projects
+- Project Dashboard
 
-### Project Members
+---
 
-- Add Members to Projects
-- Update Member Roles
+## 👥 Members
+
+- Invite Members
+- Assign Roles
 - Remove Members
-- Get Project Members
+- Role Management
 
-### Tasks
+---
 
-- Create Tasks
-- Update Tasks
-- Delete Tasks
-- Get Task Details
-- Get Project Tasks
-- Pagination & Filtering
+## ✅ Tasks
 
-### Comments
+- CRUD Operations
+- Status Updates
+- Task Assignment
+- Due Dates
 
-- Add Comments to Tasks
-- Get Task Comments
+---
+
+## 💬 Comments
+
+- Create Comments
 - Delete Comments
+- Project Collaboration
 
-### File Uploads
+---
 
-- Upload Files to AWS S3
-- Secure Private Storage
-- Presigned Download URLs
+## 📎 Files
+
+- Upload Files
+- Download Files
 - Delete Files
 
-### Activity Logs
+---
 
-- Project Activity Timeline
-- Task Creation Logs
-- Task Updates
-- Comments Logs
-- File Upload Logs
+## 🛡️ Authorization
 
-### API Documentation
+Role-Based Access Control (RBAC)
 
-- Swagger / OpenAPI Documentation
+- OWNER
+- ADMIN
+- MEMBER
+- VIEWER
 
 ---
 
-## Tech Stack
+# 🏗️ Architecture
 
-### Backend
-
-- Node.js
-- NestJS
-- TypeScript
-
-### Database
-
-- PostgreSQL
-- Prisma ORM
-
-### Authentication
-
-- JWT Authentication
-- bcrypt password hashing
-
-### Cloud / Infrastructure
-
-- AWS S3
-- Railway (Deployment)
-
-### Documentation
-
-- Swagger / OpenAPI
-
----
-
-## Architecture
-
-```txt
-Frontend (React + Cloudflare Pages)
-            ↓
-Backend API (NestJS + Railway)
-            ↓
-PostgreSQL Database (Railway)
-            ↓
-AWS S3 (Private File Storage)
+```text
+                   React Frontend
+                          │
+                     AWS Cognito
+                          │
+             Access Token / ID Token
+                          │
+                          ▼
+                NestJS Authentication Guard
+                          │
+                          ▼
+                     Controllers
+                          │
+                          ▼
+                      Services
+                          │
+                          ▼
+                      Prisma ORM
+                          │
+                          ▼
+                     PostgreSQL
 ```
 
 ---
 
-## API Documentation
+# 🔒 Authentication Flow
 
-Swagger UI:
+```text
+User
 
-```txt
-https://project-management-api-production-c67f.up.railway.app/api/docs
+ │
+
+ ▼
+
+AWS Cognito
+
+ │
+
+ ▼
+
+ID Token
+
+ │
+
+ ▼
+
+sync-user endpoint
+
+ │
+
+ ▼
+
+PostgreSQL User
+
+ │
+
+ ▼
+
+Access Token
+
+ │
+
+ ▼
+
+Protected APIs
+
+ │
+
+ ▼
+
+RBAC Validation
 ```
-
 
 ---
 
-## Environment Variables
+# 👥 Role-Based Access Control
 
-Create a `.env` file:
+| Role | Permissions |
+|------|-------------|
+| OWNER | Full project administration |
+| ADMIN | Manage project content and members |
+| MEMBER | Create and update tasks, comments and files |
+| VIEWER | Read-only access |
 
-```env
-DATABASE_URL=
+---
 
-JWT_SECRET=
-JWT_EXPIRES_IN=1d
+# 📦 API Modules
 
-AWS_REGION=
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-AWS_S3_BUCKET_NAME=
+```text
+Auth
+
+Projects
+
+Members
+
+Tasks
+
+Comments
+
+Files
+
+Users
 ```
 
 ---
 
-## Running Locally
+# 🛠 Tech Stack
 
-### Install dependencies
+| Layer | Technology |
+|---------|------------|
+| Framework | NestJS |
+| Language | TypeScript |
+| ORM | Prisma ORM |
+| Database | PostgreSQL |
+| Authentication | AWS Cognito |
+| Authorization | RBAC |
+| API Docs | Swagger |
+| Cloud | Railway |
+| Validation | class-validator |
+| File Uploads | Multer |
+
+---
+
+# 📂 Project Structure
+
+```text
+src
+│
+├── auth
+├── users
+├── projects
+├── members
+├── tasks
+├── comments
+├── files
+├── prisma
+├── common
+└── config
+```
+
+---
+
+# 🚀 Running Locally
+
+## Clone repository
+
+```bash
+git clone https://github.com/ecustodio123/project-management-api.git
+```
+
+---
+
+## Install dependencies
 
 ```bash
 npm install
 ```
 
-### Run migrations
+---
 
-```bash
-npx prisma migrate dev
+## Configure environment variables
+
+```env
+DATABASE_URL=
+
+COGNITO_USER_POOL_ID=
+
+COGNITO_CLIENT_ID=
+
+AWS_REGION=
+
+JWT_SECRET=
 ```
 
-### Generate Prisma Client
+---
+
+## Run migrations
+
+```bash
+npx prisma migrate deploy
+```
+
+---
+
+## Generate Prisma Client
 
 ```bash
 npx prisma generate
 ```
 
-### Start development server
+---
+
+## Start server
 
 ```bash
 npm run start:dev
 ```
 
-API will run on:
+---
 
-```txt
-http://localhost:3000
-```
+# 📚 API Documentation
 
-Swagger:
+Swagger
 
-```txt
-http://localhost:3000/api/docs
-```
+https://project-management-api-production-c67f.up.railway.app/api/docs
 
 ---
 
-## Deployment
+# 🧠 What I Learned
 
-### Backend
+During the development of FlowPilot API I gained hands-on experience with:
 
-Deployed using:
-
-```txt
-Railway
-```
-
-### Database
-
-Hosted on:
-
-```txt
-Railway PostgreSQL
-```
-
-### File Storage
-
-Hosted on:
-
-```txt
-AWS S3
-```
+- NestJS Architecture
+- Prisma ORM
+- PostgreSQL
+- AWS Cognito
+- Authentication Flows
+- Authorization (RBAC)
+- REST API Design
+- Authentication Guards
+- JWT Validation
+- Cloud Deployments
+- Secure Backend Architecture
+- Clean Service Layer Design
 
 ---
 
-## Security Considerations
+# 🚀 Future Improvements
 
-- JWT Protected Endpoints
-- Password Hashing with bcrypt
-- Private AWS S3 Bucket
-- Presigned URLs for File Access
-- Route Authorization
-- Project Membership Validation
-
----
-
-## Future Improvements
-
-- Role Permissions Expansion
-- Realtime Updates
+- Refresh Token Rotation
+- Audit Logs
+- Email Notifications
 - WebSockets
-- Unit / Integration Testing
-- CI/CD Pipeline
-- AWS Cognito Authentication
-- Dockerized Production Environment
+- Background Jobs
+- Redis Caching
+- Docker
+- Kubernetes
+- Monitoring & Observability
 
 ---
 
-## Learning Goals
+# 🔗 Related Projects
 
-This project was built to strengthen knowledge in:
+Frontend Repository
 
-- Backend Engineering
-- Database Relationships
-- Authentication & Authorization
-- Cloud Storage
-- API Architecture
-- Fullstack Development
-- AWS Services
-- Real-world System Design
+https://github.com/ecustodio123/project-management-web
+
+Frontend Demo
+
+https://project-management-web.pages.dev/
+
+---
+
+# 👨‍💻 Author
+
+**Enrique Custodio**
+
+React Native & Frontend Engineer
+
+Expanding into Full Stack & Cloud Engineering.
+
+---
+
+## ⭐ If you found this project interesting, consider giving it a star!

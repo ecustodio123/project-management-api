@@ -7,6 +7,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../s3/s3.service';
 import { ActivityAction } from '@prisma/client';
 import { ActivityLogService } from '../activity-log/activity-log.service';
+import {
+  canManageProject,
+  canWriteProjectContent,
+} from 'src/projects/utils/project-permissions';
 
 @Injectable()
 export class FilesService {
@@ -40,8 +44,10 @@ export class FilesService {
       },
     });
 
-    if (!member) {
-      throw new ForbiddenException('You are not a member of this project');
+    if (!member || !canWriteProjectContent(member.role)) {
+      throw new ForbiddenException(
+        'You do not have permission to upload files',
+      );
     }
     const uploadedFile = await this.s3Service.uploadFile(
       file,
@@ -142,6 +148,15 @@ export class FilesService {
       },
     });
 
+    const isFileOwner = file.uploadedById === currentUserId;
+    const canDeleteOthers = !member || canManageProject(member?.role);
+
+    if (!isFileOwner && !canDeleteOthers) {
+      throw new ForbiddenException(
+        'You do not have permission to delete this file',
+      );
+    }
+
     if (!member) {
       throw new ForbiddenException('You are not a member of this project');
     }
@@ -200,5 +215,22 @@ export class FilesService {
     }
 
     return this.s3Service.getSignedDownloadUrl(file.filename);
+  }
+
+  private async getProjectMember(projectId: string, userId: string) {
+    const member = await this.prisma.projectMember.findUnique({
+      where: {
+        userId_projectId: {
+          userId,
+          projectId,
+        },
+      },
+    });
+
+    if (!member) {
+      throw new ForbiddenException('You are not a member of this project');
+    }
+
+    return member;
   }
 }
